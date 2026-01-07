@@ -1,27 +1,27 @@
 import { useState, useCallback } from 'react';
 import { SearchBar } from '@/components/SearchBar';
 import { IssueList } from '@/components/IssueList';
-import { useGitHubIssues } from '@/hooks/useGitHubIssues';
+import { useGitHubSearch } from '@/hooks/useGitHubSearch';
 import { IssueState } from '@/types/github';
 
 const Index = () => {
-  const { issues, loading, error, fetchIssues, hasMore, page } = useGitHubIssues();
-  const [currentRepo, setCurrentRepo] = useState('');
+  const { issues, loading, error, totalCount, searchIssues, hasMore, page } = useGitHubSearch();
+  const [currentQuery, setCurrentQuery] = useState('');
   const [currentState, setCurrentState] = useState<IssueState>('open');
   const [hasSearched, setHasSearched] = useState(false);
 
-  const handleSearch = useCallback((repo: string, state: IssueState) => {
-    setCurrentRepo(repo);
+  const handleSearch = useCallback((query: string, state: IssueState) => {
+    setCurrentQuery(query);
     setCurrentState(state);
     setHasSearched(true);
-    fetchIssues(repo, state, 1);
-  }, [fetchIssues]);
+    searchIssues(query, state, 1);
+  }, [searchIssues]);
 
   const handleLoadMore = useCallback(() => {
-    if (currentRepo) {
-      fetchIssues(currentRepo, currentState, page + 1);
+    if (currentQuery) {
+      searchIssues(currentQuery, currentState, page + 1);
     }
-  }, [currentRepo, currentState, page, fetchIssues]);
+  }, [currentQuery, currentState, page, searchIssues]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -31,7 +31,7 @@ const Index = () => {
             issues
           </h1>
           <p className="text-sm text-muted-foreground font-mono">
-            find github issues to work on
+            search github issues across all public repos
           </p>
         </header>
 
@@ -41,9 +41,9 @@ const Index = () => {
 
         {hasSearched && (
           <>
-            {!loading && !error && issues.length > 0 && (
+            {!loading && !error && totalCount > 0 && (
               <div className="mb-4 text-xs text-muted-foreground font-mono">
-                {issues.length} issue{issues.length !== 1 ? 's' : ''} · {currentRepo}
+                {totalCount.toLocaleString()} result{totalCount !== 1 ? 's' : ''}
               </div>
             )}
             <IssueList
@@ -57,19 +57,22 @@ const Index = () => {
         )}
 
         {!hasSearched && (
-          <div className="border border-border bg-card p-8 text-center">
-            <p className="text-muted-foreground font-mono text-sm">
-              enter a repository to search for issues
+          <div className="border border-border bg-card p-8">
+            <p className="text-muted-foreground font-mono text-sm mb-4">
+              examples:
             </p>
-            <p className="text-muted-foreground/60 font-mono text-xs mt-2">
-              examples: facebook/react · vercel/next.js · microsoft/vscode
-            </p>
+            <div className="space-y-2 text-xs font-mono">
+              <p><span className="text-foreground">good first issue</span> <span className="text-muted-foreground">— find beginner-friendly issues</span></p>
+              <p><span className="text-foreground">repo:facebook/react bug</span> <span className="text-muted-foreground">— bugs in react</span></p>
+              <p><span className="text-foreground">user:vercel label:help-wanted</span> <span className="text-muted-foreground">— vercel repos needing help</span></p>
+              <p><span className="text-foreground">typescript error handling</span> <span className="text-muted-foreground">— issues about ts errors</span></p>
+            </div>
           </div>
         )}
 
         <footer className="mt-12 pt-6 border-t border-border">
           <p className="text-xs text-muted-foreground font-mono text-center">
-            uses github public api · rate limited to 60 req/hr
+            github search api · 30 req/min · max 1000 results
           </p>
         </footer>
       </div>
