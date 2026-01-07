@@ -7,8 +7,15 @@ interface IssueCardProps {
   issue: GitHubIssue;
 }
 
+function extractRepoName(repositoryUrl: string): string {
+  // Extract "owner/repo" from "https://api.github.com/repos/owner/repo"
+  const match = repositoryUrl.match(/repos\/(.+)$/);
+  return match ? match[1] : '';
+}
+
 export function IssueCard({ issue }: IssueCardProps) {
   const [expanded, setExpanded] = useState(false);
+  const repoName = extractRepoName(issue.repository_url);
 
   return (
     <div className="border border-border bg-card hover:border-muted-foreground transition-colors">
@@ -25,8 +32,10 @@ export function IssueCard({ issue }: IssueCardProps) {
         </button>
 
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-muted-foreground text-sm">#{issue.number}</span>
+          <div className="flex items-center gap-2 mb-1 flex-wrap">
+            <span className="text-muted-foreground text-xs">{repoName}</span>
+            <span className="text-muted-foreground/50">·</span>
+            <span className="text-muted-foreground text-xs">#{issue.number}</span>
             <span
               className={`text-xs px-1.5 py-0.5 border ${
                 issue.state === 'open'
@@ -45,7 +54,7 @@ export function IssueCard({ issue }: IssueCardProps) {
           <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
             <span>{issue.user.login}</span>
             <span>·</span>
-            <span>{formatDistanceToNow(new Date(issue.created_at), { addSuffix: true })}</span>
+            <span>{formatDistanceToNow(new Date(issue.updated_at), { addSuffix: true })}</span>
             {issue.comments > 0 && (
               <>
                 <span>·</span>
